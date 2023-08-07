@@ -1,6 +1,7 @@
 ---
 title: "First git project"
 output: html_document
+author: Sichao Wang
 date: "2023-08-07"
 ---
 
