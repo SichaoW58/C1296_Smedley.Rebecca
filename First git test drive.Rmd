@@ -1,6 +1,8 @@
 ---
 title: "First git project"
-output: html_document
+output: 
+  html_document: 
+    keep_md: yes
 author: Sichao Wang
 date: "2023-08-07"
 ---
