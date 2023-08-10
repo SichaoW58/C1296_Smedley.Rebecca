@@ -1,2 +1,6 @@
 .Rproj.user
 *.html
+*.pdf
+Data/
+E-mails/
+Outputs/
