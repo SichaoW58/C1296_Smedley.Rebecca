@@ -106,7 +106,7 @@ dir_create(here("Code"))       # r code
 dir_create(here("E-mails"))    # correspondence
 
 # Declare location of this script relative to the project root directory.
-here::i_am(path = "Code/C1296_Smedley_Association of Ki67 index and prognosis markers.qmd")  #save the qmd under code first and run this line.
+here::i_am(path = "Code/C1296_Smedley_Ki67.qmd")  #save the qmd under code first and run this line.
 
 # dir_ls()    # briefly check
 # dir_tree()  # Show the tree, not necessary, takes time.
@@ -298,6 +298,32 @@ logit_location_report %>% tab_model()
 ```
 
 Here, we use location report=1 as reference to calculate odd ratios. Odds ratio between any level of location report can be derived from this table. For example, odd ratio($\frac{location=2}{location=3}$) = $\frac{2.20}{1.88}$=`r 2.2/1.88`.
+
+
+### Tumor depth and Ki 67
+
+```{r}
+#| label: infer-tumor-report
+
+# Will use univariate logit to get odd ratio and ci, be careful has to set reference level for Ki67 to 0 
+
+logit_tumor_thick <- glm(Ki67 ~ tumor_thickness, data = Dat_Melanoma_clean %>% mutate(Ki67=factor(Ki67,levels=c(0,1)),tumor_mm=100*tumor_thickness), family = "binomial")
+
+logit_tumor_mm <- glm(Ki67 ~ tumor_mm, data = Dat_Melanoma_clean %>% mutate(Ki67=factor(Ki67,levels=c(0,1)),tumor_mm=100*tumor_thickness), family = "binomial")
+
+
+logit_beyond_dermis <- glm(Ki67 ~ beyond_dermis, data = Dat_Melanoma_clean %>% mutate(Ki67=factor(Ki67,levels=c(0,1)),tumor_mm=100*tumor_thickness), family = "binomial")
+
+# logit_tumor_thick %>% tab_model()
+
+
+# logit_tumor_mm %>% tab_model()
+
+# logit_beyond_dermis %>% tab_model()
+
+
+
+```
 
 ## Additional association/correlation analysis
 
