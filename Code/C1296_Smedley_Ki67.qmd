@@ -76,6 +76,10 @@ pacman::p_load(## file folder setup
                rpart, # for dx2y()
                psych, #
                confintr, #for cramersv(), also good bootstrap CI tools.
+               
+               # diagostic tests
+               DTComPair, # for sensitivity, specificity, PPV and NPV for diagnostics tests.
+               ROCit, #for ROC and graph
                ## result reporting
                ### graph
                ggplot2,
@@ -531,3 +535,208 @@ data.frame(marker=names(Dat_Melanoma_clean)[3:12],cramerV=cramerV %>% round(3),l
 # https://rviews.rstudio.com/2021/04/15/an-alternative-to-the-correlation-coefficient-that-works-for-numeric-and-categorical-variables/
 
 ```
+
+
+# Diagnostics test accuracy
+
+We will estimate sensitivity, specificity, Positive predictive value(PPV) and negative predictive value for each prognostics marker. From the convenience of the software, are for the positive likelihood ratio (PLR) and negative likelihood ratios(NLR) are also given.
+
+Some notes:
+
+Sensitivity and specificity are property of diagnostics tests, which are considered to be *independent on* prevalence(target population). 
+
+PPV and NPV are also property of diagnostic tests, which are *dependent on* prevalence(target population). In a clinical setting, PPV and NPV are more useful. There is a formula to convert sensitivity and specificity with prevalence to PPV and NPV. 
+
+Positive likelihood ratio (PLR) and negative likelihood ratios(NLR) combine sensitivity and specificity into one index. 
+
+
+
+## nuclear_atypia and Ki67
+
+```{r}
+#| label: nuclear_atypia_accuracy
+
+
+# this blog recommends # install.packages("DTComPair")
+#https://library.virginia.edu/data/articles/comparing-the-accuracy-of-two-binary-diagnostic-tests-in-a-paired-study-design
+
+Dat_Melanoma_cells<-Dat_Melanoma_clean %>% mutate(nuclear_atypia_cell=case_when(
+  Ki67==1 & nuclear_atypia==1 ~ "TP",
+  Ki67==0 & nuclear_atypia==1 ~ "FP",
+  Ki67==1 & nuclear_atypia==0 ~ "FN",
+  Ki67==0 & nuclear_atypia==0 ~ "TN",
+  
+), mitotoc_cell=case_when(
+  Ki67==1 & mitotoc==1 ~ "TP",
+  Ki67==0 & mitotoc==1 ~ "FP",
+  Ki67==1 & mitotoc==0 ~ "FN",
+  Ki67==0 & mitotoc==0 ~ "TN",
+  
+),pigment_cell=case_when(
+  Ki67==1 & pigment==1 ~ "TP",
+  Ki67==0 & pigment==1 ~ "FP",
+  Ki67==1 & pigment==0 ~ "FN",
+  Ki67==0 & pigment==0 ~ "TN",
+  
+),ulceration_cell=case_when(
+  Ki67==1 & ulceration==1 ~ "TP",
+  Ki67==0 & ulceration==1 ~ "FP",
+  Ki67==1 & ulceration==0 ~ "FN",
+  Ki67==0 & ulceration==0 ~ "TN",
+  
+),beyond_dermis_cell=case_when(
+  Ki67==1 & beyond_dermis==1 ~ "TP",
+  Ki67==0 & beyond_dermis==1 ~ "FP",
+  Ki67==1 & beyond_dermis==0 ~ "FN",
+  Ki67==0 & beyond_dermis==0 ~ "TN",
+  
+),size_cell=case_when(
+  Ki67==1 & size==1 ~ "TP",
+  Ki67==0 & size==1 ~ "FP",
+  Ki67==1 & size==0 ~ "FN",
+  Ki67==0 & size==0 ~ "TN",
+  
+))
+
+
+
+nuclear_atypia_cellcount<-Dat_Melanoma_cells %>% count(nuclear_atypia_cell) %>% drop_na()
+
+
+mitotoc_cellcount<-Dat_Melanoma_cells %>% count(mitotoc_cell)%>% drop_na()
+
+
+
+
+pigment_cellcount<-Dat_Melanoma_cells %>% count(pigment_cell)%>% drop_na()
+
+
+ulceration_cellcount<-Dat_Melanoma_cells %>% count(ulceration_cell)%>% drop_na()
+
+
+beyond_dermis_cellcount<-Dat_Melanoma_cells %>% count(beyond_dermis_cell)%>% drop_na() %>% bind_rows(data.frame(beyond_dermis_cell="FP",n=0))
+
+
+size_cellcount<-Dat_Melanoma_cells %>% count(size_cell)%>% drop_na()
+
+
+nuclear_atypia_tab <- read.tab.1test(a = 11, b = 10, c = 17, d = 81, 
+                          testname = "nuclear_atypia")
+acc.1test(nuclear_atypia_tab)
+
+```
+
+## mitotoc and Ki67
+
+```{r}
+#| label: mitotoc_accuracy
+
+mitotoc_cellcount<-Dat_Melanoma_cells %>% count(mitotoc_cell)%>% drop_na()
+
+
+
+mitotoc_tab <- read.tab.1test(a = 26, b =18 , c = 2, d = 74, 
+                          testname = "mitotoc")
+acc.1test(mitotoc_tab)
+
+```
+
+Mitotic count has fairly good sensitivity and specificity.
+
+
+## pigment and Ki67
+
+```{r}
+#| label: pigment_accuracy
+
+pigment_cellcount<-Dat_Melanoma_cells %>% count(pigment_cell)%>% drop_na()
+
+pigment_tab <- read.tab.1test(a = 20, b =50 , c = 8, d = 41, 
+                          testname = "pigment")
+acc.1test(pigment_tab)
+
+```
+
+## ulceration and Ki67
+
+```{r}
+#| label: ulceration_accuracy
+
+ulceration_cellcount<-Dat_Melanoma_cells %>% count(ulceration_cell)%>% drop_na()
+
+ulceration_tab <- read.tab.1test(a = 10, b =12 , c = 18, d = 79, 
+                          testname = "ulceration")
+acc.1test(ulceration_tab)
+
+```
+
+## beyond_dermis and Ki67
+
+```{r}
+#| label: beyond_dermis_accuracy
+
+beyond_dermis_cellcount<-Dat_Melanoma_cells %>% count(beyond_dermis_cell)%>% drop_na() %>% bind_rows(data.frame(beyond_dermis_cell="FP",n=0))
+
+
+beyond_dermis_tab <- read.tab.1test(a = 2, b= 0, c = 25, d = 88, 
+                          testname = "beyond_dermis")
+acc.1test(beyond_dermis_tab)
+
+```
+## Size and Ki67
+
+```{r}
+#| label: size_accuracy
+
+size_cellcount<-Dat_Melanoma_cells %>% count(size_cell)%>% drop_na()
+
+
+size_tab <- read.tab.1test(a = 2, b= 4, c = 26, d = 87, 
+                          testname = "size")
+acc.1test(size_tab)
+
+```
+
+# ROC analysis for mitotic count
+
+ROC analysis is conducted for each possible cutoff value. 
+ 
+```{r}
+#| label: roc_mitotic_count
+
+
+data("Diabetes")
+summary(Diabetes$dtest)
+#>    Length     Class      Mode 
+#>       403 character character
+summary(as.factor(Diabetes$dtest))
+
+#https://cran.r-project.org/web/packages/ROCit/vignettes/my-vignette.html
+
+roc_empirical <- rocit(score = Dat_Melanoma_clean$mitotic_count, class =Dat_Melanoma_clean$Ki67,
+                       negref = "0") 
+
+# summary(roc_empirical)
+
+
+tibble(Cutoff=roc_empirical$Cutoff, 
+                 Sensitivity=roc_empirical$TPR, 
+                 "1-Specificity"=roc_empirical$FPR,
+                 specificity=1-roc_empirical$FPR) %>% gt()
+
+```
+
+The cutoff column show if value > cutoff will considered to be positive. 
+
+
+```{r}
+#| label: fig-roc
+
+plot(roc_empirical, values = F)
+
+
+```
+
+
+ROC curves shows the optimal cut off value is 3. And the AUC is `r roc_empirical$AUC`.
+
