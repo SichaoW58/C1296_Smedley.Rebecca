@@ -169,7 +169,8 @@ We notice that there 1 dog has unspecified sex. 4 dogs have unspecified values f
 df_1 <- df_0 |> 
   mutate(
    across(c(sex,intact,beyond_dermis,size),~ifelse(.=="unspecified"|.=="unknow",NA,.))
-  )
+  ) |> 
+  mutate(beyond_dermis=as.factor(ifelse(beyond_dermis=="1","1","0")))
 
 df_1 %>% 
   select(-case_number) %>% 
@@ -336,7 +337,7 @@ Tetrachoric correlation is for two binary variables.It ranges from -1 to 1 and i
 #| label: cor-tetra
 #| warning: false
 #| output-location: column-fragment
-tetrachoric<-tetrachoric(df_1 %>% select(-case_number,-location_self,-location_report,-tumor_thickness,-mitotic_count,-intact,-size, -beyond_dermis) %>% mutate(sex=ifelse(sex=="1",1,0)) %>%  mutate_all(as.character) %>% mutate_all(as.numeric))
+tetrachoric<-tetrachoric(df_1 %>% select(-case_number,-location_self,-location_report,-tumor_thickness,-mitotic_count,-intact,-size) %>% mutate(sex=ifelse(sex=="1",1,0)) %>%  mutate_all(as.character) %>% mutate_all(as.numeric))
 
 
 
@@ -353,7 +354,7 @@ Polychoric correlation is extension of Tetrachoric correlation, which is variabl
 ```{r}
 #| label: cor-polychor
 #| warning: false
-polychoric<-polychoric(df_1 %>% select(Ki67,location_self,location_report,size,beyond_dermis) %>% mutate_all(as.character) %>% mutate_all(as.numeric))
+polychoric<-polychoric(df_1 %>% select(Ki67,location_self,location_report,size) %>% mutate_all(as.character) %>% mutate_all(as.numeric))
 
 polychoric$rho %>% round(2) %>% data.frame() %>% 
   rownames_to_column(" ") %>% 
@@ -581,15 +582,14 @@ df_1_cells<-df_1 %>% mutate(nuclear_atypia_cell=case_when(
   Ki67==1 & ulceration==0 ~ "FN",
   Ki67==0 & ulceration==0 ~ "TN",
   
-)
+) ,beyond_dermis_cell=case_when(
+  Ki67==1 & beyond_dermis==1 ~ "TP",
+  Ki67==0 & beyond_dermis==1 ~ "FP",
+  Ki67==1 & beyond_dermis==0 ~ "FN",
+  Ki67==0 & beyond_dermis==0 ~ "TN",
 
-# ,beyond_dermis_cell=case_when(
-#   Ki67==1 & beyond_dermis==1 ~ "TP",
-#   Ki67==0 & beyond_dermis==1 ~ "FP",
-#   Ki67==1 & beyond_dermis==0 ~ "FN",
-#   Ki67==0 & beyond_dermis==0 ~ "TN",
-#   
-# ),size_cell=case_when(
+)
+# ,size_cell=case_when(
 #   Ki67==1 & size==1 ~ "TP",
 #   Ki67==0 & size==1 ~ "FP",
 #   Ki67==1 & size==0 ~ "FN",
@@ -614,13 +614,14 @@ pigment_cellcount<-df_1_cells %>% count(pigment_cell)%>% drop_na()
 ulceration_cellcount<-df_1_cells %>% count(ulceration_cell)%>% drop_na()
 
 
-# beyond_dermis_cellcount<-Dat_Melanoma_cells %>% count(beyond_dermis_cell)%>% drop_na() %>% bind_rows(data.frame(beyond_dermis_cell="FP",n=0))
-# 
-# 
+beyond_dermis_cellcount<-df_1_cells %>% count(beyond_dermis_cell)%>% drop_na() 
+# %>% bind_rows(data.frame(beyond_dermis_cell="FP",n=0))
+
+
 # size_cellcount<-Dat_Melanoma_cells %>% count(size_cell)%>% drop_na()
 
 
-nuclear_atypia_tab <- read.tab.1test(a = 11, b = 10, c = 17, d = 81, 
+nuclear_atypia_tab <- read.tab.1test(a = 13, b = 3, c = 5, d = 29, 
                           testname = "nuclear_atypia")
 acc.1test(nuclear_atypia_tab)
 
@@ -634,8 +635,7 @@ acc.1test(nuclear_atypia_tab)
 mitotoc_cellcount<-df_1_cells %>% count(mitotoc_cell)%>% drop_na()
 
 
-
-mitotoc_tab <- read.tab.1test(a = 26, b =18 , c = 2, d = 74, 
+mitotoc_tab <- read.tab.1test(a = 16, b =16 , c = 2, d = 16, 
                           testname = "mitotoc")
 acc.1test(mitotoc_tab)
 
@@ -651,7 +651,8 @@ Mitotic count has fairly good sensitivity and specificity.
 
 pigment_cellcount<-df_1_cells %>% count(pigment_cell)%>% drop_na()
 
-pigment_tab <- read.tab.1test(a = 20, b =50 , c = 8, d = 41, 
+
+pigment_tab <- read.tab.1test(a = 12, b =16 , c = 6, d = 16, 
                           testname = "pigment")
 acc.1test(pigment_tab)
 
@@ -664,7 +665,8 @@ acc.1test(pigment_tab)
 
 ulceration_cellcount<-df_1_cells %>% count(ulceration_cell)%>% drop_na()
 
-ulceration_tab <- read.tab.1test(a = 10, b =12 , c = 18, d = 79, 
+
+ulceration_tab <- read.tab.1test(a = 13, b =9 , c = 5, d = 23, 
                           testname = "ulceration")
 acc.1test(ulceration_tab)
 
@@ -672,16 +674,16 @@ acc.1test(ulceration_tab)
 
 ## beyond_dermis and Ki67
 
-No diagnostic stats because beyond_dermis is not binary.
+beyond dermis as a 1 and confined to dermis as a 0. 
 
 ```{r}
 #| label: beyond_dermis_accuracy
-#| eval: false
-
-beyond_dermis_cellcount<-df_1_cells %>% count(beyond_dermis_cell)%>% drop_na() %>% bind_rows(data.frame(beyond_dermis_cell="FP",n=0))
 
 
-beyond_dermis_tab <- read.tab.1test(a = 2, b= 0, c = 25, d = 88, 
+beyond_dermis_cellcount<-df_1_cells %>% count(beyond_dermis_cell)%>% drop_na()
+
+
+beyond_dermis_tab <- read.tab.1test(a = 11, b= 24, c = 7, d = 8, 
                           testname = "beyond_dermis")
 acc.1test(beyond_dermis_tab)
 
