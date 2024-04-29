@@ -705,11 +705,6 @@ ROC analysis is conducted for each possible cutoff value.
 #| label: roc_mitotic_count
 
 
-data("Diabetes")
-summary(Diabetes$dtest)
-#>    Length     Class      Mode 
-#>       403 character character
-summary(as.factor(Diabetes$dtest))
 
 #https://cran.r-project.org/web/packages/ROCit/vignettes/my-vignette.html
 
